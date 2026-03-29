@@ -56,7 +56,7 @@ export function ProjectCard({ project, className }: ProjectCardProps) {
           {project.title}
         </h3>
         <p className="mb-6 flex-1 text-sm leading-7 text-slate-300">
-          {project.description}
+          {project.description.split("\n")[0]}...
         </p>
 
         <div className="mt-auto space-y-3">

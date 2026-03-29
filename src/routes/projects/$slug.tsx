@@ -80,7 +80,7 @@ function ProjectDetails() {
               {project.title}
             </h1>
             <p className="max-w-3xl text-lg leading-8 text-slate-300">
-              {project.description}
+              {project.description.split("\n")[0]}...{" "}
             </p>
           </div>
 
