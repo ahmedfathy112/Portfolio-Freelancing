@@ -6,7 +6,6 @@
     "build": "npx content-collections build && vite build"
   },
   "dependencies": {
-    "@emailjs/browser": "^4.4.1",
     "@radix-ui/react-checkbox": "^1.2.2",
     "@radix-ui/react-hover-card": "^1.1.10",
     "@radix-ui/react-separator": "^1.1.4",
@@ -16,7 +15,6 @@
     "@tanstack/react-router": "^1.163.3",
     "@tanstack/react-start": "^1.166.1",
     "@tanstack/router-plugin": "^1.164.0",
-    "@vercel/node": "^5.6.22",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.576.0",
@@ -39,6 +37,7 @@
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^5.0.4",
+    "content-collections": "^0.14.3",
     "lucide-react": "^0.576.0",
     "rimraf": "^6.0.1",
     "tailwindcss": "^4.0.6",
