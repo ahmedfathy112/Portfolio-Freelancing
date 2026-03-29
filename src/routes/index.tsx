@@ -418,7 +418,7 @@ function PortfolioHighlight() {
               </div>
             </div>
             <a
-              href="https://drive.google.com/file/d/1zUTb_4k3s0GpL2KywuR68zyRNuGZqcgt/view?usp=sharing"
+              href="https://drive.google.com/file/d/1hB1NpYHX-QpkXaXfvyhzMdklAfOw3mlj/view?usp=sharing"
               target="_blank"
               className="inline-flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 font-medium text-sm hover:opacity-90 transition-opacity"
             >
@@ -469,7 +469,10 @@ function ContactSection() {
     const name = formData.get("name")?.toString() ?? "";
     const email = formData.get("email")?.toString() ?? "";
     const message = formData.get("message")?.toString() ?? "";
-    const publicKey = "E9zJR5viRTspkwJ1W";
+    const publicKey =
+      import.meta.env.VITE_EMAILJS_PUBLIC_KEY ||
+      process.env.VITE_EMAILJS_PUBLIC_KEY ||
+      "";
 
     if (!publicKey) {
       setSending(false);
@@ -483,8 +486,8 @@ function ContactSection() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        service_id: "service_hmqmbah",
-        template_id: "template_p3w211f",
+        service_id: "service_xcy6d3k",
+        template_id: "template_3hrh5jl",
         user_id: publicKey,
         template_params: {
           from_name: name,
@@ -493,8 +496,11 @@ function ContactSection() {
         },
       }),
     })
-      .then((res) => {
-        if (!res.ok) throw new Error("Send failed");
+      .then(async (res) => {
+        if (!res.ok) {
+          const detail = await res.text();
+          throw new Error(detail || "Send failed");
+        }
         setSubmitted(true);
         form.reset();
       })
