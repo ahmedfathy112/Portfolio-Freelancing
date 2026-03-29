@@ -1,16 +1,9 @@
 {
   "version": 2,
-  "framework": "vinxi",
-  "builds": [
+  "rewrites": [
     {
-      "src": "app/router.tsx",
-      "use": "@vercel/node"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/"
+      "source": "/(.*)",
+      "destination": "/"
     }
   ]
 }
