@@ -3,7 +3,6 @@ import { useState } from "react";
 
 import { ProjectCard } from "@/components/ProjectCard";
 import { fetchProjects } from "@/server/projects.functions";
-import emailjs from "@emailjs/browser";
 
 export const Route = createFileRoute("/")({
   loader: async () => {
@@ -633,18 +632,41 @@ function ContactSection() {
     setSending(true);
     setError(null);
 
-    emailjs
-      .sendForm(
-        "service_hmqmbah",
-        "template_p3w211f",
-        e.currentTarget,
-        "E9zJR5viRTspkwJ1W",
-      )
-      .then(() => {
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+    const name = formData.get("name")?.toString() ?? "";
+    const email = formData.get("email")?.toString() ?? "";
+    const message = formData.get("message")?.toString() ?? "";
+    const publicKey = "E9zJR5viRTspkwJ1W";
+
+    if (!publicKey) {
+      setSending(false);
+      setError(
+        "EmailJS public key is missing. Set VITE_EMAILJS_PUBLIC_KEY and restart the build.",
+      );
+      return;
+    }
+
+    fetch("https://api.emailjs.com/api/v1.0/email/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        service_id: "service_hmqmbah",
+        template_id: "template_p3w211f",
+        user_id: publicKey,
+        template_params: {
+          from_name: name,
+          reply_to: email,
+          message,
+        },
+      }),
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Send failed");
         setSubmitted(true);
-        e.currentTarget.reset();
+        form.reset();
       })
-      .catch((err: any) => {
+      .catch((err) => {
         setError("Failed to send message. Please try again later.");
         console.error("EmailJS Error:", err);
       })
