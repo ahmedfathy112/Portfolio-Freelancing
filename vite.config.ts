@@ -22,6 +22,21 @@ const config = defineConfig({
   optimizeDeps: {
     exclude: ["@content-collections/vite", "fdir"],
   },
+  build: {
+    rollupOptions: {
+      onwarn(warning, warn) {
+        // Suppress unused external import warnings coming from TanStack internal bundles
+        if (
+          warning.code === "UNUSED_EXTERNAL_IMPORT" &&
+          typeof warning.id === "string" &&
+          warning.id.includes("@tanstack/start")
+        ) {
+          return;
+        }
+        warn(warning);
+      },
+    },
+  },
 });
 
 export default config;

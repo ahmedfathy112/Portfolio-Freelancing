@@ -58,7 +58,7 @@ var projects = defineCollection({
   })
 });
 var content_collections_default = defineConfig({
-  collections: [jobs, education, blog, projects]
+  content: [jobs, education, blog, projects]
 });
 export {
   content_collections_default as default
