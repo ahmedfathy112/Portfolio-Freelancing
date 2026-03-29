@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "npx content-collections build && vite build"
+    "build": "vite build"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.2.2",
@@ -37,7 +37,7 @@
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^5.0.4",
-    "content-collections": "^0.14.3",
+    "content-collections": "0.2.1",
     "lucide-react": "^0.576.0",
     "rimraf": "^6.0.1",
     "tailwindcss": "^4.0.6",
