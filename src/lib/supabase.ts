@@ -32,3 +32,49 @@ export interface ProjectFormData {
   image_url?: string[];
   image_files?: File[];
 }
+
+export interface Certificate {
+  id: string;
+  title: string;
+  issuer: string;
+  date_issued: string; // ISO date string
+  certificate_url: string | null;
+  description: string[];
+  order_index?: number;
+  created_at?: string;
+}
+
+export interface CertificateFormData {
+  id?: string;
+  title: string;
+  issuer: string;
+  date_issued: string;
+  certificate_url?: string | null;
+  description: string[];
+}
+
+export interface Experience {
+  id: string;
+  position: string;
+  company: string;
+  location: string | null;
+  company_url: string | null;
+  start_date: string; // ISO date string
+  end_date: string | null;
+  is_present: boolean;
+  achievements: string[];
+  order_index?: number;
+  created_at?: string;
+}
+
+export interface ExperienceFormData {
+  id?: string;
+  position: string;
+  company: string;
+  location?: string | null;
+  company_url?: string | null;
+  start_date: string;
+  end_date?: string | null;
+  is_present?: boolean;
+  achievements: string[];
+}

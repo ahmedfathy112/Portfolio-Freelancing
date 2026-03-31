@@ -3,19 +3,52 @@ import { useState } from "react";
 
 import { ProjectCard } from "@/components/ProjectCard";
 import { fetchProjects } from "@/server/projects.functions";
+import { fetchExperiences } from "@/server/experiences.functions";
+import { fetchCertificates } from "@/server/certificates.functions";
 
 export const Route = createFileRoute("/")({
   loader: async () => {
-    try {
-      const projects = await fetchProjects();
-      return { projects, projectsError: null };
-    } catch (error) {
-      return {
-        projects: [],
-        projectsError:
-          error instanceof Error ? error.message : "Failed to load projects",
-      };
-    }
+    const result = {
+      projects: [] as Awaited<ReturnType<typeof fetchProjects>>,
+      experiences: [] as Awaited<ReturnType<typeof fetchExperiences>>,
+      certificates: [] as Awaited<ReturnType<typeof fetchCertificates>>,
+      projectsError: null as string | null,
+      experiencesError: null as string | null,
+      certificatesError: null as string | null,
+    };
+
+    await Promise.all([
+      (async () => {
+        try {
+          result.projects = await fetchProjects();
+        } catch (error) {
+          result.projectsError =
+            error instanceof Error ? error.message : "Failed to load projects";
+        }
+      })(),
+      (async () => {
+        try {
+          result.experiences = await fetchExperiences();
+        } catch (error) {
+          result.experiencesError =
+            error instanceof Error
+              ? error.message
+              : "Failed to load experiences";
+        }
+      })(),
+      (async () => {
+        try {
+          result.certificates = await fetchCertificates();
+        } catch (error) {
+          result.certificatesError =
+            error instanceof Error
+              ? error.message
+              : "Failed to load certificates";
+        }
+      })(),
+    ]);
+
+    return result;
   },
   component: Portfolio,
 });
@@ -26,6 +59,8 @@ function Portfolio() {
       <Navbar />
       <HeroSection />
       <AboutSection />
+      <ExperienceSectionLive />
+      <CertificationsSectionLive />
       <SkillsSection />
       <HomeProjectsSection />
       <PortfolioHighlight />
@@ -40,6 +75,8 @@ function Navbar() {
   const [open, setOpen] = useState(false);
   const links = [
     { href: "#about", label: "About" },
+    { href: "#experience", label: "Experience" },
+    { href: "#certifications", label: "Certifications" },
     { href: "#skills", label: "Skills" },
     { href: "#projects", label: "Projects" },
     { href: "#portfolio", label: "Portfolio" },
@@ -265,6 +302,232 @@ function AboutSection() {
             </div>
           </div>
         </div>
+      </div>
+    </section>
+  );
+}
+/* ── Experience ─────────────────────────────────────────────── */
+
+function ExperienceSectionLive() {
+  const { experiences, experiencesError } = Route.useLoaderData();
+
+  const formatDate = (value: string | null | undefined) => {
+    if (!value) return "Present";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      year: "numeric",
+    });
+  };
+
+  return (
+    <section id="experience" className="py-24 px-4">
+      <div className="max-w-6xl mx-auto">
+        <SectionLabel icon="fa-briefcase" text="Experience" />
+        <p className="text-gray-500 text-center mt-3 mb-12">
+          Roles where business context, data rigor, and storytelling came
+          together.
+        </p>
+
+        {experiencesError && (
+          <p className="text-sm text-red-400 text-center mb-8">
+            {experiencesError}
+          </p>
+        )}
+
+        {experiences.length > 0 ? (
+          <div className="flex flex-col gap-6">
+            {experiences.map((exp) => (
+              <article
+                key={exp.id}
+                className="relative overflow-hidden rounded-2xl border border-white/5 bg-white/[0.03] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/30"
+              >
+                <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-blue-500 to-purple-600" />
+
+                <div className="flex flex-col lg:flex-row gap-4 lg:items-start lg:justify-between pl-4">
+                  <div className="flex-1 space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.2em] text-blue-300/80">
+                          {exp.position}
+                        </p>
+                        <h3 className="text-xl font-semibold flex items-center gap-2">
+                          {exp.company}
+                          {exp.company_url && (
+                            <a
+                              href={exp.company_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-400 text-sm inline-flex items-center gap-1 hover:text-blue-300"
+                            >
+                              <i className="fas fa-link" />
+                              Website
+                            </a>
+                          )}
+                        </h3>
+                      </div>
+                      <div className="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1 text-xs text-gray-400 border border-white/10 w-fit">
+                        <i className="fas fa-calendar" />
+                        <span>
+                          {formatDate(exp.start_date)} -{" "}
+                          {exp.is_present
+                            ? "Present"
+                            : formatDate(exp.end_date)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-3 text-xs text-gray-500">
+                      {exp.location && (
+                        <div className="inline-flex items-center gap-2 rounded-full bg-blue-500/10 px-3 py-1 border border-blue-500/20 text-blue-200">
+                          <i className="fas fa-location-dot" />
+                          {exp.location}
+                        </div>
+                      )}
+                      <div className="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1 border border-white/10">
+                        <i className="fas fa-building" />
+                        {exp.company}
+                      </div>
+                    </div>
+
+                    <ul className="space-y-2 text-sm text-gray-300">
+                      {exp.achievements.map((item) => (
+                        <li key={item} className="flex items-start gap-3">
+                          <span className="mt-1 h-2 w-2 rounded-full bg-gradient-to-r from-blue-400 to-purple-500" />
+                          <span className="leading-relaxed">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="flex lg:flex-col gap-2 pl-4 lg:pl-0 min-w-[180px]">
+                    <div className="flex items-center gap-2 text-sm text-gray-300 bg-white/5 rounded-xl px-3 py-2 border border-white/10">
+                      <i className="fas fa-clock text-xs text-blue-300" />
+                      <span>
+                        {exp.is_present ? "Current role" : "Past role"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-300 bg-white/5 rounded-xl px-3 py-2 border border-white/10">
+                      <i className="fas fa-chart-line text-xs text-purple-300" />
+                      <span>Impact driven</span>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center text-gray-400">
+            No experiences yet.
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+/* ── Certifications ────────────────────────────────────────── */
+
+function CertificationsSectionLive() {
+  const { certificates, certificatesError } = Route.useLoaderData();
+
+  const formatDate = (value: string | null | undefined) => {
+    if (!value) return "N/A";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      year: "numeric",
+    });
+  };
+
+  return (
+    <section id="certifications" className="py-24 px-4 bg-[#060b18]">
+      <div className="max-w-6xl mx-auto">
+        <SectionLabel icon="fa-certificate" text="Certifications" />
+        <p className="text-gray-500 text-center mt-3 mb-12">
+          Formal credentials backing up the hands-on work.
+        </p>
+
+        {certificatesError && (
+          <p className="text-sm text-red-400 text-center mb-8">
+            {certificatesError}
+          </p>
+        )}
+
+        {certificates.length > 0 ? (
+          <div className="flex flex-col gap-6">
+            {certificates.map((cert) => (
+              <article
+                key={cert.id}
+                className="relative overflow-hidden rounded-2xl border border-white/5 bg-white/[0.04] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/40"
+              >
+                <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-blue-500 to-purple-500" />
+
+                <div className="flex flex-col lg:flex-row gap-4 lg:items-start lg:justify-between pl-4">
+                  <div className="space-y-3 flex-1">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.18em] text-blue-200/80">
+                          Certificate
+                        </p>
+                        <h3 className="text-xl font-semibold text-white">
+                          {cert.title}
+                        </h3>
+                      </div>
+                      <div className="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1 text-xs text-gray-300 border border-white/10 w-fit">
+                        <i className="fas fa-calendar" />
+                        <span>{formatDate(cert.date_issued)}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-3 text-xs text-gray-500">
+                      <div className="inline-flex items-center gap-2 rounded-full bg-blue-500/10 px-3 py-1 border border-blue-500/20 text-blue-100">
+                        <i className="fas fa-building-columns" />
+                        {cert.issuer}
+                      </div>
+                      {cert.certificate_url && (
+                        <a
+                          href={cert.certificate_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1 border border-white/10 text-gray-200 hover:border-blue-400 hover:text-blue-200 transition-colors"
+                        >
+                          <i className="fas fa-arrow-up-right-from-square" />
+                          View certificate
+                        </a>
+                      )}
+                    </div>
+
+                    <ul className="space-y-2 text-sm text-gray-300 leading-relaxed">
+                      {cert.description.map((line) => (
+                        <li key={line} className="flex gap-2">
+                          <span className="mt-1 h-1.5 w-1.5 rounded-full bg-purple-400" />
+                          <span>{line}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="flex lg:flex-col gap-2 pl-4 lg:pl-0 min-w-[180px]">
+                    <div className="flex items-center gap-2 text-sm text-gray-300 bg-white/5 rounded-xl px-3 py-2 border border-white/10">
+                      <i className="fas fa-award text-xs text-purple-300" />
+                      <span>Verified learning</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-300 bg-white/5 rounded-xl px-3 py-2 border border-white/10">
+                      <i className="fas fa-laptop-code text-xs text-blue-300" />
+                      <span>Hands-on labs</span>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center text-gray-400">
+            No certificates yet.
+          </div>
+        )}
       </div>
     </section>
   );
