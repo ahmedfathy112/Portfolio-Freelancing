@@ -2,6 +2,7 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { ProjectCard } from "@/components/ProjectCard";
+import { fetchCvLink } from "@/server/cv-links.functions";
 import { fetchProjects } from "@/server/projects.functions";
 import { fetchExperiences } from "@/server/experiences.functions";
 import { fetchCertificates } from "@/server/certificates.functions";
@@ -12,9 +13,11 @@ export const Route = createFileRoute("/")({
       projects: [] as Awaited<ReturnType<typeof fetchProjects>>,
       experiences: [] as Awaited<ReturnType<typeof fetchExperiences>>,
       certificates: [] as Awaited<ReturnType<typeof fetchCertificates>>,
+      cvLink: null as Awaited<ReturnType<typeof fetchCvLink>>,
       projectsError: null as string | null,
       experiencesError: null as string | null,
       certificatesError: null as string | null,
+      cvLinkError: null as string | null,
     };
 
     await Promise.all([
@@ -44,6 +47,14 @@ export const Route = createFileRoute("/")({
             error instanceof Error
               ? error.message
               : "Failed to load certificates";
+        }
+      })(),
+      (async () => {
+        try {
+          result.cvLink = await fetchCvLink();
+        } catch (error) {
+          result.cvLinkError =
+            error instanceof Error ? error.message : "Failed to load CV link";
         }
       })(),
     ]);
@@ -430,6 +441,7 @@ function ExperienceSectionLive() {
 
 function CertificationsSectionLive() {
   const { certificates, certificatesError } = Route.useLoaderData();
+  const featuredCertificates = certificates.slice(0, 2);
 
   const formatDate = (value: string | null | undefined) => {
     if (!value) return "N/A";
@@ -455,16 +467,16 @@ function CertificationsSectionLive() {
           </p>
         )}
 
-        {certificates.length > 0 ? (
-          <div className="flex flex-col gap-6">
-            {certificates.map((cert) => (
+        {featuredCertificates.length > 0 ? (
+          <div className="grid gap-6 md:grid-cols-2">
+            {featuredCertificates.map((cert) => (
               <article
                 key={cert.id}
-                className="relative overflow-hidden rounded-2xl border border-white/5 bg-white/[0.04] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/40"
+                className="relative h-full overflow-hidden rounded-2xl border border-white/5 bg-white/[0.04] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/40"
               >
                 <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-blue-500 to-purple-500" />
 
-                <div className="flex flex-col lg:flex-row gap-4 lg:items-start lg:justify-between pl-4">
+                <div className="flex h-full flex-col gap-4 pl-4">
                   <div className="space-y-3 flex-1">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                       <div>
@@ -508,17 +520,6 @@ function CertificationsSectionLive() {
                       ))}
                     </ul>
                   </div>
-
-                  <div className="flex lg:flex-col gap-2 pl-4 lg:pl-0 min-w-[180px]">
-                    <div className="flex items-center gap-2 text-sm text-gray-300 bg-white/5 rounded-xl px-3 py-2 border border-white/10">
-                      <i className="fas fa-award text-xs text-purple-300" />
-                      <span>Verified learning</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-300 bg-white/5 rounded-xl px-3 py-2 border border-white/10">
-                      <i className="fas fa-laptop-code text-xs text-blue-300" />
-                      <span>Hands-on labs</span>
-                    </div>
-                  </div>
                 </div>
               </article>
             ))}
@@ -526,6 +527,18 @@ function CertificationsSectionLive() {
         ) : (
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center text-gray-400">
             No certificates yet.
+          </div>
+        )}
+
+        {certificates.length > 0 && (
+          <div className="mt-10 flex justify-center">
+            <Link
+              to="/certificates"
+              className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+            >
+              View all certificates
+              <i className="fas fa-arrow-right text-xs" />
+            </Link>
           </div>
         )}
       </div>
@@ -649,6 +662,9 @@ function SkillsSection() {
 
 /* ── Portfolio Highlight ────────────────────────────────────── */
 function PortfolioHighlight() {
+  const { cvLink, cvLinkError } = Route.useLoaderData();
+  const cvUrl = cvLink?.url ?? "https://drive.google.com/";
+
   return (
     <section id="portfolio" className="py-24 px-4 bg-[#060b18]">
       <div className="max-w-6xl mx-auto">
@@ -656,6 +672,12 @@ function PortfolioHighlight() {
         <p className="text-gray-500 text-center mt-3 mb-14">
           Featured deliverables showcasing analytical depth and presentation.
         </p>
+
+        {cvLinkError && (
+          <p className="mb-8 text-center text-sm text-red-400">
+            {cvLinkError}
+          </p>
+        )}
 
         <div className="flex flex-row justify-center gap-8">
           {/* PDF Portfolio */}
@@ -681,8 +703,9 @@ function PortfolioHighlight() {
               </div>
             </div>
             <a
-              href="https://drive.google.com/file/d/1hB1NpYHX-QpkXaXfvyhzMdklAfOw3mlj/view?usp=sharing"
+              href={cvUrl}
               target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 font-medium text-sm hover:opacity-90 transition-opacity"
             >
               <i className="fas fa-download" />

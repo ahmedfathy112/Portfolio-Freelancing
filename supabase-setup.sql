@@ -20,9 +20,25 @@ CREATE TABLE IF NOT EXISTS projects (
 CREATE INDEX IF NOT EXISTS idx_projects_created_at ON projects(created_at DESC);
 
 -- ============================================================================
+-- Create CV Links Table
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS cv_links (
+  id INTEGER PRIMARY KEY DEFAULT 1,
+  url TEXT NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT one_row_only CHECK (id = 1)
+);
+
+-- Seed the singleton row if it does not exist yet
+INSERT INTO cv_links (id, url)
+VALUES (1, 'https://drive.google.com/your-cv-link-here')
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================================
 -- Enable Row Level Security (RLS)
 -- ============================================================================
 ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cv_links ENABLE ROW LEVEL SECURITY;
 
 -- ============================================================================
 -- Create RLS Policies for Public Access
@@ -52,6 +68,28 @@ CREATE POLICY "Allow public delete"
   ON projects
   FOR DELETE
   USING (true);
+
+-- ============================================================================
+-- Create RLS Policies for CV Link
+-- ============================================================================
+
+-- Policy: Allow anyone to read the singleton CV link
+CREATE POLICY "Allow public read cv link"
+  ON cv_links
+  FOR SELECT
+  USING (id = 1);
+
+-- Policy: Allow dashboard writes to the singleton CV link
+CREATE POLICY "Allow public upsert cv link"
+  ON cv_links
+  FOR INSERT
+  WITH CHECK (id = 1);
+
+CREATE POLICY "Allow public update cv link"
+  ON cv_links
+  FOR UPDATE
+  USING (id = 1)
+  WITH CHECK (id = 1);
 
 -- ============================================================================
 -- Create Project Images Storage Bucket (via SQL)

@@ -21,6 +21,7 @@ import {
   updateCertificate,
   deleteCertificate,
 } from "../server/certificates.functions";
+import { fetchCvLink, upsertCvLink } from "../server/cv-links.functions";
 import ProjectForm from "./ProjectForm";
 import ProjectGrid from "./ProjectGrid";
 import { useNotification } from "../lib/useNotification";
@@ -56,6 +57,7 @@ export default function ProjectsDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [isExpLoading, setIsExpLoading] = useState(true);
   const [isCertLoading, setIsCertLoading] = useState(true);
+  const [isCvLoading, setIsCvLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -63,12 +65,14 @@ export default function ProjectsDashboard() {
   const [isCertFormOpen, setIsCertFormOpen] = useState(false);
   const [isExpSubmitting, setIsExpSubmitting] = useState(false);
   const [isCertSubmitting, setIsCertSubmitting] = useState(false);
+  const [isCvSubmitting, setIsCvSubmitting] = useState(false);
   const [editingExperience, setEditingExperience] =
     useState<ExperienceEntry | null>(null);
   const [experiences, setExperiences] = useState<ExperienceEntry[]>([]);
   const [certifications, setCertifications] = useState<CertificationEntry[]>(
     [],
   );
+  const [cvLink, setCvLink] = useState("");
   const [experienceForm, setExperienceForm] = useState<ExperienceFormState>({
     position: "",
     company: "",
@@ -97,6 +101,7 @@ export default function ProjectsDashboard() {
     loadProjects();
     loadExperiences();
     loadCertificates();
+    loadCvLink();
   }, []);
 
   const loadProjects = async () => {
@@ -184,6 +189,25 @@ export default function ProjectsDashboard() {
       setCertifications([]);
     } finally {
       setIsCertLoading(false);
+    }
+  };
+
+  const loadCvLink = async () => {
+    try {
+      setIsCvLoading(true);
+      const data = await fetchCvLink();
+      setCvLink(data?.url ?? "");
+    } catch (error) {
+      console.error("Error loading CV link:", error);
+      showNotification(
+        error instanceof Error
+          ? error.message
+          : "Failed to load CV link. Check Supabase configuration.",
+        "error",
+      );
+      setCvLink("");
+    } finally {
+      setIsCvLoading(false);
     }
   };
 
@@ -312,6 +336,28 @@ export default function ProjectsDashboard() {
       description: "",
     });
     setEditingCertificate(null);
+  };
+
+  const handleCvLinkSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!cvLink.trim()) {
+      showNotification("Please enter a valid CV link.", "error");
+      return;
+    }
+    setIsCvSubmitting(true);
+    upsertCvLink({ data: { url: cvLink.trim() } })
+      .then(() => {
+        showNotification("CV link saved", "success");
+        loadCvLink();
+      })
+      .catch((error) => {
+        console.error(error);
+        showNotification(
+          error instanceof Error ? error.message : "Failed to save CV link",
+          "error",
+        );
+      })
+      .finally(() => setIsCvSubmitting(false));
   };
 
   const handleAddAchievement = () => {
@@ -1135,6 +1181,73 @@ export default function ProjectsDashboard() {
                   ))}
                 </div>
               )}
+            </section>
+
+            <section id="cv-link" className="scroll-mt-24">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-white">CV Link</h2>
+                  <p className="text-slate-400 text-sm">
+                    Store the single public link used by the homepage.
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-slate-700 bg-slate-800/70 p-6 shadow-xl">
+                {isCvLoading ? (
+                  <div className="flex items-center justify-center py-10">
+                    <div className="text-center">
+                      <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500" />
+                      <p className="mt-3 text-slate-400 text-sm">
+                        Loading CV link...
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <form onSubmit={handleCvLinkSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-sm text-slate-300" htmlFor="cvUrl">
+                        CV URL
+                      </label>
+                      <input
+                        id="cvUrl"
+                        type="url"
+                        value={cvLink}
+                        onChange={(e) => setCvLink(e.target.value)}
+                        disabled={isCvSubmitting}
+                        placeholder="https://drive.google.com/..."
+                        className="w-full rounded-lg bg-slate-900 border border-slate-700 px-4 py-3 text-sm text-white focus:border-blue-500 outline-none disabled:opacity-50"
+                      />
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+                      <p className="text-xs text-slate-500">
+                        The homepage portfolio card will always use this link.
+                      </p>
+                      <div className="flex gap-3">
+                        {cvLink && (
+                          <a
+                            href={cvLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-200 hover:bg-slate-700 transition-colors"
+                          >
+                            <i className="fas fa-arrow-up-right-from-square" />
+                            Preview
+                          </a>
+                        )}
+                        <button
+                          type="submit"
+                          disabled={isCvSubmitting || !cvLink.trim()}
+                          className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors disabled:opacity-50"
+                        >
+                          {isCvSubmitting ? "Saving..." : "Save CV Link"}
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+                )}
+              </div>
             </section>
           </div>
         </div>

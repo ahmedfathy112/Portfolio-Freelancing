@@ -78,3 +78,13 @@ export interface ExperienceFormData {
   is_present?: boolean;
   achievements: string[];
 }
+
+export interface CvLink {
+  id: number;
+  url: string;
+  updated_at?: string;
+}
+
+export interface CvLinkFormData {
+  url: string;
+}
